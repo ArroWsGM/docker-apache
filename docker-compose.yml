@@ -1,6 +1,6 @@
 version: '3'
 services:
-  apache: # change to suit
+  apache: # change to suit env APP_SERVICE
     build:
       context: ./docker
       dockerfile: Dockerfile
@@ -13,6 +13,7 @@ services:
     ports:
       - '${APP_PORT:-80}:80'
       - '443:443'
+      - '${FORWARD_MAILHOG_PORT:-1025}:1025'
     environment:
       WWWUSER: '${WWWUSER:-1000}'
       WWWGROUP: '${WWWGROUP:-1000}'
@@ -27,18 +28,6 @@ services:
     depends_on:
       - mysql
       - redis
-#  caddy:
-#    image: caddy:latest
-#    restart: unless-stopped
-#    ports:
-#      - '${APP_PORT:-80}:80'
-#      - '443:443'
-#    volumes:
-#      - './caddy:/etc/caddy'
-#      - sailcaddy:/data
-#      - sailcaddy:/config
-#    networks:
-#      - sail
   mysql:
     image: mariadb:${MARIA_VERSION}
     command: --max_allowed_packet=256M --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -58,6 +47,22 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
       retries: 3
       timeout: 5s
+  phpmyadmin:
+    image: bitnami/phpmyadmin:latest
+    ports:
+      - '8080:8080'
+      - '8443:8443'
+    environment:
+      DATABASE_HOST: mysql
+      PHP_MAX_EXECUTION_TIME: 0
+      PHP_MAX_INPUT_TIME: -1
+      PHP_POST_MAX_SIZE: 2048M
+      PHP_UPLOAD_MAX_FILESIZE: 2048M
+    depends_on:
+      - mysql
+    restart: always
+    networks:
+      - sail
   mailhog:
     image: 'mailhog/mailhog:latest'
     ports:
@@ -81,11 +86,7 @@ networks:
   sail:
     driver: bridge
 volumes:
-#  sailmysql:
-#    driver: local
   sail-apache:
     driver: local
   sail-redis:
     driver: local
-#  sailcaddy:
-#    driver: local

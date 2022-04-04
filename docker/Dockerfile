@@ -39,7 +39,7 @@ RUN curl -LJO https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhs
 RUN a2enmod ssl rewrite
 RUN git config --global init.defaultBranch main
 
-EXPOSE 80 443
+EXPOSE 80 443 1025
 
 RUN usermod  --uid $WWWUSER $UNAME
 RUN groupmod --gid $WWWGROUP $UGROUP
